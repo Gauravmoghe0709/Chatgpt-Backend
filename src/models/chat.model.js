@@ -6,7 +6,7 @@ const mongoose = require("mongoose")
 const chatschame = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "userdatas",
+        ref: "users",
         require: true
     },
     title: {
