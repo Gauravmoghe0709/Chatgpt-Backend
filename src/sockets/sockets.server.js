@@ -23,7 +23,10 @@ function initialsocket(httpserver) {
             const decoded = jwt.verify(cookies.token, process.env.JWT_SECRET)
             const user = await usermodel.findById(decoded._id)
 
+
+
             socket.user = user
+            console.log(socket.user)
             next() // allow connection
 
 
@@ -34,27 +37,40 @@ function initialsocket(httpserver) {
 
         io.on("connection", (socket) => {
 
-            console.log(socket)
 
-            socket.on("ai-message", async (message) => {
+            socket.on("ai-message", async (message) => {  //   sent a message to server from clien using this event
 
-                await messagemodel.create({
+              /*  await messagemodel.create({
                     chat: message.chat,
-                    id: socket.id,
+                    userid: socket.user._id,
                     content: message.content,
                     role: "user"
+                })*/
+
+                 const vectors = 
+
+
+                const chathistory = await messagemodel.find({    //  get a chathistory and log it
+                    chat: message.chat
                 })
+                console.log(chathistory)
 
-                const getresponse = await aiservice.generateResponse(message.content)
+                const getresponse = await aiservice.generateResponse(chathistory.map(items => {
+                    return {
+                        role: items.role,
+                        parts: [{ text: items.content }]
+                    }
+                }))
 
-                await messagemodel.create({
+                /*await messagemodel.create({
                     chat: message.chat,
+                    userid: socket.user._id,
                     content: getresponse,
                     role: "model"
-                })
+                }) */
 
 
-                socket.emit("ai-response",{
+                socket.emit("ai-response", {    //  sent a response to client using this event
                     content: getresponse,
                 })
 
