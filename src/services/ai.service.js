@@ -28,7 +28,7 @@ async function generateembedding(content) {      // This function is use to gene
         }
     })
 
-    return response.embeddings
+    return response.embeddings[0].values
 }
 
 module.exports = {
