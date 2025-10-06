@@ -4,7 +4,6 @@ const connecttodb = require("./src/db/db")
 const initialsocket = require("./src/sockets/sockets.server")
 const httpserver = require("http").createServer(app)
 
-
 connecttodb()
 initialsocket(httpserver)
     

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken")
 const usermodel = require("../models/user.model")
 const aiservice = require("../services/ai.service")
 const messagemodel = require("../models/message.model")
-const {createvectormemory,querymemory} = require("../services/vector.service");
+const { createvectormemory, querymemory } = require("../services/vector.service");
 
 
 
@@ -42,47 +42,111 @@ function initialsocket(httpserver) {
 
             socket.on("ai-message", async (message) => {  //   sent a message to server from clien using this event
 
-              const sentmessage = await messagemodel.create({
-                    chat: message.chat,
-                    userid: socket.user._id,
-                    content: message.content,
-                    role: "user"
-                })
+                /*const sentmessage = await messagemodel.create({
+                      chat: message.chat,
+                      userid: socket.user._id,
+                      content: message.content,
+                      role: "user"
+                  })
+                  const vectors = await aiservice.generateembedding(message.content) */ // generate the vectors 
 
-                const vectors = await aiservice.generateembedding(message.content)  // generate the vectors 
+                // why we use promise.all beasuse of obtimization and get a quick response to user from ai 
+                
 
-                const memory = await querymemory({       // querymomery in our database and return last 3 messages
-                    queryvector:vectors,
-                    limit:3,                     
-                    metadata:{}
 
-                })
-            
-                await createvectormemory({               //  after generate a vectors create a memory in pinecone database using createvectormemory function
-                    messageid:sentmessage._id,
-                     vectors,
-                    metadata:{                                  // metadata means extra information about this data
-                        chat:message.chat,
+                const [sentmessage, vectors] = await Promise.all([
+
+                    messagemodel.create({
+                        chat: message.chat,
+                        userid: socket.user._id,
+                        content: message.content,
+                        role: "user"
+                    }),
+
+                    aiservice.generateembedding(message.content),   // generate the vectors 
+
+                ])
+
+                await createvectormemory({            //  after generate a vectors create a memory in pinecone database using createvectormemory function
+                    messageid: sentmessage._id,
+                    vectors,
+                    metadata: {                // metadata means extra information about this data
+                        chat: message.chat,
                         user: socket.user._id,
                         text: message.content
                     }
                 })
 
-                console.log(memory)
+                /*const memory = await querymemory({       // querymomery in our database and return last 3 messages
+                    queryvector: vectors,
+                    limit: 3,
+                    metadata: {}
 
-                const chathistory = await messagemodel.find({    //  get a chathistory and log it
+                })*/
+
+
+                /* await createvectormemory({               //  after generate a vectors create a memory in pinecone database using createvectormemory function
+                     messageid: sentmessage._id,
+                     vectors,
+                     metadata: {                                  // metadata means extra information about this data
+                         chat: message.chat,
+                         user: socket.user._id,
+                         text: message.content
+                     }
+                 })*/
+
+
+                const [memory, chathistory] = await Promise.all([
+
+                    querymemory({       // querymomery in our database and return last 3 messages
+                        queryvector: vectors,
+                        limit: 3,
+                        metadata: {
+                            chat: message.chat,
+                        }
+
+                    }),
+                    messagemodel.find({    //  get a chathistory and log it
+                        chat: message.chat
+                    }).limit(5)
+
+                ])
+
+                /* 
+                   messagemodel.find({    //  get a chathistory and log it
                     chat: message.chat
-                }) 
+                }).limit(5)
 
-                const getresponse = await aiservice.generateResponse(chathistory.map(items => {
+                */
+
+                const stm = chathistory.map(items => {
                     return {
                         role: items.role,
                         parts: [{ text: items.content }]
                     }
-                }))
-                
+                })
 
-                const responsemessage = await messagemodel.create({
+                const ltm = [
+                    {
+                        role: "user",
+                        parts: [
+                            {
+                                text: `   
+                                 these are previous message from this chat
+                                 ${memory.map(items => items.metadata.text).join("\n")}
+                                `
+                            }
+                        ]
+                    }
+                ]
+                console.log(ltm[0])
+                console.log(stm)
+
+
+                const getresponse = await aiservice.generateResponse([...stm, ...ltm])
+
+
+                /*const responsemessage = await messagemodel.create({
                     chat: message.chat,
                     userid: socket.user._id,
                     content: getresponse,
@@ -90,25 +154,45 @@ function initialsocket(httpserver) {
                 })
 
                 const responsevector = await aiservice.generateembedding(getresponse)
-                
+
                 await createvectormemory({
-                    messageid:responsemessage._id,
-                     vectors:responsevector,
-                    metadata:{                                  // metadata means extra information about this data
-                        chat:message.chat,
+                    messageid: responsemessage._id,
+                    vectors: responsevector,
+                    metadata: {                                  // metadata means extra information about this data
+                        chat: message.chat,
                         user: socket.user._id,
-                        text:getresponse
+                        text: getresponse
+                    }
+
+                })*/
+
+
+                const [responsemessage, responsevector] = await Promise.all([
+                    messagemodel.create({
+                        chat: message.chat,
+                        userid: socket.user._id,
+                        content: getresponse,
+                        role: "model"
+                    }),
+
+                    aiservice.generateembedding(getresponse),
+                ])
+
+                await createvectormemory({
+                    messageid: responsemessage._id,
+                    vectors: responsevector,
+                    metadata: {                                  // metadata means extra information about this data
+                        chat: message.chat,
+                        user: socket.user._id,
+                        text: getresponse
                     }
 
                 })
-
-                
 
 
                 socket.emit("ai-response", {    //  sent a response to client using this event
                     content: getresponse,
                 })
-
 
             })
 

@@ -6,6 +6,7 @@ const router = express.Router()
 
 router.post("/newuser",usercontroller.registeruser)
 router.post("/loginuser",usercontroller.loginuser)
+router.post("/logoutuser",usercontroller.logoutuser)
 
 
 
