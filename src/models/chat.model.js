@@ -7,18 +7,16 @@ const chatschame = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "users",
-        require: true
+        required: true
     },
     title: {
         type: String,
-        require: true,
+        required: true,
     },
     lastactivity: {
         type: Date,
-        default: Date.now()
-    },
-
-
+        default: Date.now
+    }
 })
 
 

@@ -37,7 +37,7 @@ async function registeruser(req,res){
         message:"New user created...",
         newuser:{
             email:newuser.email,
-            _id:newuser._id
+            _id:newuser._id,
         }
      })
     
@@ -67,6 +67,7 @@ async function loginuser(req,res) {
         user:{
             _id: user._id,
             email: user.email,
+            token:token
         }
     })
 

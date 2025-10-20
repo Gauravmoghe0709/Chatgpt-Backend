@@ -1,4 +1,6 @@
 const chatmodel = require("../models/chat.model")
+const messagemodel = require("../models/message.model")
+
 
 
 async function newuserchat(req,res){
@@ -8,9 +10,7 @@ async function newuserchat(req,res){
 
     const chat = await chatmodel.create({
         user: user._id,
-        title,
-
-         
+        title,    
        
     })
 
@@ -26,7 +26,36 @@ async function newuserchat(req,res){
     })
 
 }
+async function getallchats(req,res){
+    const user = req.user
+
+    const getuser = await chatmodel.find({user:user._id})
+
+    res.json({
+        message:"Fetch all chats",
+        getuser,
+
+    })
+    
+}
+
+async function getmessages(req,res){
+    
+    const chatid= req.params.id
+
+    const messages = await messagemodel.find({chat:chatid}).sort({createsAt:1})
+
+    res.status(201).json({
+        message:"messages retrived",
+        messages:messages
+        
+    })
+
+}
 
 module.exports = {
-    newuserchat
+    newuserchat,
+    getallchats,
+    getmessages
 }
+

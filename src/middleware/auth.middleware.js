@@ -10,7 +10,7 @@ async function userchat(req,res,next){
          const decode = jwt.verify(token,process.env.JWT_SECRET)
          const user = await usermodel.findOne(decode.id)
          
-         req.user = user
+         req.user = user  // Holds the logged-in user details and sent to next controller
          next()
 
        } catch (error) {

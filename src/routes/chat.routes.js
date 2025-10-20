@@ -8,6 +8,9 @@ const router = express.Router()
 
 router.post("",authmiddleware.userchat,chatcontroller.newuserchat)
 
+router.get("/getchats",authmiddleware.userchat,chatcontroller.getallchats)
+
+router.get("/:id",authmiddleware.userchat,chatcontroller.getmessages)
 
 
 
