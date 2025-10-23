@@ -7,6 +7,7 @@ const httpserver = require("http").createServer(app)
 connecttodb()
 initialsocket(httpserver)
     
-httpserver.listen(3000,()=>{
-    console.log(("server running on port 3000"))
-})
+const PORT = process.env.PORT || 3000;
+httpserver.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
