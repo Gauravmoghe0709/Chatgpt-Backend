@@ -6,7 +6,7 @@ const bcryptjs = require("bcryptjs")
 
 async function registeruser(req,res){
     
-    const {fullname:{firstname,lastname},email,password} = req.body
+    const {username,email,password} = req.body
 
     const userexist = await usermodel.findOne({
         email
@@ -20,16 +20,13 @@ async function registeruser(req,res){
     const hashpassword = await bcryptjs.hash(password,10)
 
      const newuser = await usermodel.create({
-        fullname:{
-            firstname,
-            lastname
-        },
+        username,
         email,
         password:hashpassword
         
      })
 
-     const token = await jwt.sign({id:newuser._id},process.env.JWT_SECRET)
+     const token = await jwt.sign({ id: newuser._id }, process.env.JWT_SECRET)
      res.cookie("token",token)
 
 
